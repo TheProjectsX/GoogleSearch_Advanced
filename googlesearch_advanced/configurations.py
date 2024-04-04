@@ -11,41 +11,30 @@ def findFirstResult(tag):
 
 # From HTML find the Related Search Texts
 def findRelatedSearches(tag):
-    if not (tag.name == "a"):
-        return False
-
-    if not (tag.get("href", "").startswith("/search")):
-        return False
-
-    if tag.has_attr("aria-hidden"):
-        return False
-
-    if tag.find("img") or tag.find("g-img"):
-        return False
-
-    if not (
-        any(
-            (
-                (
-                    child.has_attr("class")
-                    and ("aXBZVd" in child["class"] or "unhzXb" in child["class"])
-                )
-                if hasattr(child, "has_attr")
-                else False
-            )
+    if (
+        tag.name != "a"
+        or not tag.get("href", "").startswith("/search")
+        or tag.has_attr("aria-hidden")
+        or tag.find("img")
+        or tag.find("g-img")
+        or not any(
+            child.has_attr("class")
+            and ("aXBZVd" in child["class"] or "unhzXb" in child["class"])
+            if hasattr(child, "has_attr")
+            else False
             for child in tag.children
         )
     ):
         return False
 
     cleaned_text = re.sub(r"\s+", " ", tag.get_text()).strip()
-    if cleaned_text == "":
-        return
-
-    if not (cleaned_text.replace(" ", "+") in unquote(tag.get("href", "").lower())):
+    if ((cleaned_text == "") or (cleaned_text.replace(" ", "+") not in unquote(
+        tag.get("href", "").lower()
+    ))):
         return False
 
     return True
+
 
 
 class DataConfig:
@@ -57,93 +46,129 @@ class DataConfig:
 
     Why didn't we used Dictionary?
     Cause we can't Access using `config.propertyName` and Get Suggestions of the names when we use Dictionary....
+
+    ## Variables Naming Descriptions:
+    - xxxxxxxSearchArgs_connected_N :
+        When there is `_connected_` in the variable name, it means with this Search Arg, should be used it's corresponding ParseKey
+        Example:
+            `answersSearchArgs_connected_01`, with this Search Arg, should be used `answersParseKey_connected_01` this ParseKey
+    
+    - xxxxxxxSearchArgs_N :
+        When a Variable has this format, it means it's
     """
 
-    ### Answer Searching Configs
-    answersSearchArgs = {"attrs": {"data-tts": "answers"}}
-    answersParseKey = "data-tts-text"
-
-    ### Secondary Answer searching Configs
-    # Sometimes google gives answer by parsing webpage and sometimes it gives answer via it's AI. The above config is for the Website parsed Answers. And below is of AI answer.
-    # How do I know? I just know!
-    secondaryAnswersSearchArgs = {"name": "div", "attrs": {"class": "vk_bk"}}
-    secondaryAnswersParseKey = "element.get_text()"
+    #### Direct Answer Parsing Configs ####
+    answersSearchArgs_01 = {"attrs": {"data-tts": "answers"}}
     """
-    Cannot use Directly as a Parse Key. Can be used as hint!
+    It's corresponding ParseKey can be used
     """
+    answersParseKey_01 = "data-tts-text"
 
-    ### Tertiary Answer searching Configs
-    # I have no Idea how they create this Answer. Obviously using AI, but....
-    tertiaryAnswersSearchArgs = {"name": "div", "attrs": {"class": "kp-header"}}
-    tertiaryAnswersParseKey = "element.get_text()"
+
+    answersSearchArgs_02 = {"name": "div", "attrs": {"class": "vk_bk"}}
     """
-    Cannot use Directly as a Parse Key. Can be used as hint!
+    It's corresponding ParseKey cannot be used. Need to use `element.get_text()` technic
     """
+    answersParseKey_02 = "element.get_text()"
 
-    ### Search Data Configs
-    # Sometimes when There is direct answer, the top Result's style be different, so using another Rule for that
-    searchResultSearchArgs = {"name": "div", "attrs": {"lang": True, "class": "g"}}
 
-    # searchResultSearchArgs = {"name": "div", "attrs": {"lang": True, "class": "g"}}
-    secondarySearchResultSearchArgs = {
+    answersSearchArgs_03 = {"name": "div", "attrs": {"class": "kp-header"}}
+    """
+    It's corresponding ParseKey cannot be used. Need to use `element.get_text()` technic
+    """
+    answersParseKey_03 = "element.get_text()"
+
+
+    #### Search Data Configs ####
+    searchResultSearchArgs_01 = {"name": "div", "attrs": {"lang": True, "class": "g"}}
+    """
+    This does not have any ParseKey, as it searches for the Container Element
+    """
+    searchResultSearchArgs_02 = {
         "name": "div",
         "attrs": {"data-dsrp": True, "lang": True},
     }
+    """
+    This does not have any ParseKey, as it searches for the Container Element
+    """
+
 
     # the Link
     searchResultLinkSearchArgs = {"name": "a", "href": True}
     searchResultLinkParseKey = "href"
 
     # the Title
-    # If the a contains any h3, than it is the title
-    primarySearchResultTitleSearchArgs = {"name": "h3"}
-    # The First results sometimes has different format, that's why we are using Top one, which contains the structure of the First Result
-    searchResultTitleTopSearchArgs = "a (current)"
+    # primarySearchResultTitleSearchArgs = {"name": "h3"}
+    searchResultTitleSearchArgs_01 = {"name": "h3"}
+    """
+    It's corresponding ParseKey cannot be used. Need to use `element.get_text()` technic
+    """
+
+    searchResultTitleSearchArgs_02 = {"name": "div", "attrs": {"role": "link"}}
+    """
+    It's corresponding ParseKey cannot be used. Need to use `element.get_text()` technic
+    """
+
+    searchResultTitleSearchArgs_03 = "a (current)"
     """
     Cannot use Directly as a Search Args. Can be used as hint!
+    It's corresponding ParseKey cannot be used. Need to use `element.get_text()` technic
     """
-    searchResultTitleSearchArgs = {"name": "div", "attrs": {"role": "link"}}
-    searchResultTitleParseKey = "element.get_text()"
-    """
-    Cannot use Directly as a Parse Key. Can be used as hint!
-    """
+
+    # For Each and every TitleSearchArgs
+    searchResultTitleParseKey_all = "element.get_text()"
+
 
     # the Description
-    # The First results sometimes has different format, that's why we are using Top one, which contains the structure of the First Result
-    searchResultDescriptionTopSearchArgs = {
-        "name": "span",
-        "attrs": {"class": "hgKElc"},
-    }
-
-    searchResultDescriptionSearchArgs = {
+    searchResultDescriptionSearchArgs_01 = {
         "name": "div",
         "attrs": {"data-snf": "nke7rc", "data-sncf": "1"},
     }
-
-    searchResultDescriptionParseKey = "element.get_text()"
     """
-    Cannot use Directly as a Parse Key. Can be used as hint!
+    It's corresponding ParseKey cannot be used. Need to use `element.get_text()` technic
     """
 
-    ### Related Searches Configs
-    relatedSearchesSearchArgs = {"name": findRelatedSearches}
-    secondaryRelatedSearchesSearchArgs = {
+    searchResultDescriptionSearchArgs_02 = {
+        "name": "span",
+        "attrs": {"class": "hgKElc"},
+    }
+    """
+    It's corresponding ParseKey cannot be used. Need to use `element.get_text()` technic
+    """
+
+    searchResultDescriptionParseKey_all = "element.get_text()"
+
+
+    #### Related Searches Configs ####
+    relatedSearchesSearchArgs_01 = {"name": findRelatedSearches}
+    """
+    It's corresponding ParseKey cannot be used. Need to use `element.get_text()` technic
+    """
+    relatedSearchesSearchArgs_02 = {
         "name": "div",
         "attrs": {"class": "qR29te", "role": "listitem"},
     }
+    """
+    It's corresponding ParseKey cannot be used. Need to use `element.get_text()` technic
+    """
 
-    relatedSearchesParseKey = "element.get_text()"
-    """
-    Cannot use Directly as a Parse Key. Can be used as hint!
-    """
+    relatedSearchesParseKey_all = "element.get_text()"
+
+
 
     ### Peoples Also Ask Configs
-    peoplesAlsoAskSearchArgs = {"attrs": {"data-q": True}}
-    secondaryPeoplesAlsoAskSearchArgs = {
+    peoplesAlsoAskSearchArgs_01 = {"attrs": {"data-q": True}}
+    peoplesAlsoAskQuestionParseKey_01 = "data-q"
+
+    peoplesAlsoAskSearchArgs_02 = {
         "name": "div",
         "attrs": {"class": "dnXCYb", "role": "button"},
     }
-    peoplesAlsoAskQuestionParseKey = "data-q"
+    """
+    It's corresponding ParseKey cannot be used. Need to use `element.get_text()` technic
+    """
+    peoplesAlsoAskQuestionParseKey_02 = "element.get_text()"
+    
 
     # the Link
     peoplesAlsoAskLinkSearchArgs = {"name": "a", "href": True}
