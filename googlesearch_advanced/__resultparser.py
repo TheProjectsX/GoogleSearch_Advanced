@@ -14,7 +14,8 @@ useragent = UserAgent()
 
 
 # Ignoring Warnings
-warnings.filterwarnings('ignore')
+warnings.filterwarnings("ignore")
+
 
 ###### Utility Functions ######
 # Clean the Text of Useless Spaces
@@ -50,7 +51,7 @@ def getHtml(term, lang, num, proxies, timeout):
     except Exception as e:
         return {
             "success": False,
-            "error": "Blocked by Captcha" if res.status_code == 429 else str(e)
+            "error": "Blocked by Captcha" if res.status_code == 429 else str(e),
         }
 
     return res.text
@@ -76,7 +77,6 @@ def getDirectAnswers(soup: BeautifulSoup):
     if len(directAnswers) > 0:
         return directAnswers
 
-
     # Fallback for 1st Method - For Direct Answer
     elements = soup.find_all(**config.answersSearchArgs_02)
 
@@ -101,7 +101,6 @@ def getDirectAnswers(soup: BeautifulSoup):
     if len(directAnswers) > 0:
         return directAnswers
 
-
     # Fallback for 3rd Method - Observed method - 01
     # Seeks for bold tag in the First Description of Search Result. If found, than it's the / an Answer
 
@@ -118,11 +117,11 @@ def getDirectAnswers(soup: BeautifulSoup):
 
     if descElm is None:
         return directAnswers
-    
+
     answerElms = descElm.find_all("b")
     answer = "".join([x.get_text() for x in answerElms])
 
-    if (len(answer)):
+    if len(answer):
         directAnswers.append(answer)
 
     return directAnswers
@@ -131,9 +130,9 @@ def getDirectAnswers(soup: BeautifulSoup):
 # From div, parse the Title, Link and Description
 def parseResultContainerData(element: BeautifulSoup):
     urlElm = element.find(**config.searchResultLinkSearchArgs)
-    if (urlElm is None):
+    if urlElm is None:
         return None
-    
+
     url = cleanUrl(urlElm[config.searchResultLinkParseKey])
 
     titleElm = urlElm.find(**config.searchResultTitleSearchArgs_01)
@@ -188,6 +187,9 @@ def getPeoplesAlsoAsk(soup: BeautifulSoup):
 
     for element in elements:
         question = element[config.peoplesAlsoAskQuestionParseKey_01]
+        if question == "Images":
+            continue
+
         peoplesAlsoAsk.append(question)
 
         """
@@ -218,15 +220,14 @@ def getPeoplesAlsoAsk(soup: BeautifulSoup):
         peoplesAlsoAsk.append(result)
         """
 
-    if (len(elements) > 0):
+    if len(elements) > 0:
         return peoplesAlsoAsk
-
 
     elements = soup.find_all(**config.peoplesAlsoAskSearchArgs_02)
     for element in elements:
         question = element.get_text()
         peoplesAlsoAsk.append(question)
-    
+
     return peoplesAlsoAsk
 
 
@@ -246,7 +247,11 @@ def getRelatedSearches(soup: BeautifulSoup):
 
 # Main Function to execute
 def search(
-    term: str, num_results=5, lang="en", timeout=10, proxy: Union[dict, str, None] = None
+    term: str,
+    num_results=5,
+    lang="en",
+    timeout=10,
+    proxy: Union[dict, str, None] = None,
 ):
     """
     ## Description:
@@ -261,10 +266,10 @@ def search(
 
     ### Note:
         If you use Proxy, try to use Bigger `timeout` number.
-    
+
     ### Suggestion:
         For Proxy, you can use proxy from `https://oxylabs.io`. It works fine!
-    
+
     ### Return:
         Returns a Dictionary containing Data
         If parsing is successful, the `success` will be `True`, else will be `False` and `error` will contain the Error Message
@@ -278,18 +283,18 @@ def search(
     elif type(proxy) is dict:
         proxies = proxy
 
-    num = num_results + 2 # To get Accurate Result
+    num = num_results + 2  # To get Accurate Result
     html = getHtml(term, lang=lang, num=num, proxies=proxies, timeout=timeout)
-    if (type(html) is dict): # Error ocurred
+    if type(html) is dict:  # Error ocurred
         return html
 
     soup = BeautifulSoup(html, "html.parser")
 
     directAnswers = getDirectAnswers(soup)
     searchDataList = getSearchData(soup)
-    if (len(searchDataList) > num_results):
+    if len(searchDataList) > num_results:
         searchDataList = searchDataList[:num_results]
-    
+
     relatedSearches = getRelatedSearches(soup)
     peoplesAlsoAsk = getPeoplesAlsoAsk(soup)
 
