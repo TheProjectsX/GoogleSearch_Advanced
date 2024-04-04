@@ -27,20 +27,20 @@ def cleanUrl(url: str):
 
 # Get Search Page HTML
 def getHtml(term, lang, proxies, timeout):
-    resp = requests.get(
-        url="https://www.google.com/search",
-        headers={"User-Agent": useragent.random},
-        params={
-            "q": term,
-            "hl": lang,
-        },
-        proxies=proxies,
-        timeout=timeout,
-    )
+    # resp = requests.get(
+    #     url="https://www.google.com/search",
+    #     headers={"User-Agent": useragent.random},
+    #     params={
+    #         "q": term,
+    #         "hl": lang,
+    #     },
+    #     proxies=proxies,
+    #     timeout=timeout,
+    # )
 
-    resp.raise_for_status()
-    open("temp.html", "w", encoding="utf-8").write(resp.text)
-    return resp.text
+    # resp.raise_for_status()
+    # open("temp.html", "w", encoding="utf-8").write(resp.text)
+    # return resp.text
     resp = open("temp.html", "r", encoding="utf-8").read()
     return resp
 
